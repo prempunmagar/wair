@@ -54,20 +54,42 @@ import {
 } from 'firebase/firestore';
 
 // --- Firebase Initialization ---
-const firebaseConfig = typeof __firebase_config !== 'undefined'
-  ? JSON.parse(__firebase_config)
-  : {
-      apiKey: import.meta.env?.VITE_FIREBASE_API_KEY || '',
-      authDomain: import.meta.env?.VITE_FIREBASE_AUTH_DOMAIN || '',
-      projectId: import.meta.env?.VITE_FIREBASE_PROJECT_ID || '',
-      storageBucket: import.meta.env?.VITE_FIREBASE_STORAGE_BUCKET || '',
-      messagingSenderId: import.meta.env?.VITE_FIREBASE_MESSAGING_SENDER_ID || '',
-      appId: import.meta.env?.VITE_FIREBASE_APP_ID || ''
-    };
-const app = initializeApp(firebaseConfig);
-const auth = getAuth(app);
-const db = getFirestore(app);
-const appId = typeof __app_id !== 'undefined' ? __app_id : (import.meta.env?.VITE_FIREBASE_APP_ID || 'default-app-id');
+const getFirebaseConfig = () => {
+  // Check for canvas/iframe environment first
+  if (typeof __firebase_config !== 'undefined') {
+    return JSON.parse(__firebase_config);
+  }
+  // Use Vite environment variables
+  const config = {
+    apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
+    authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN,
+    projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID,
+    storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET,
+    messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID,
+    appId: import.meta.env.VITE_FIREBASE_APP_ID
+  };
+
+  // Debug: log if config is missing
+  if (!config.apiKey || !config.projectId) {
+    console.error('Firebase config missing! Check VITE_FIREBASE_* env vars.');
+    console.log('Available env:', import.meta.env);
+  }
+
+  return config;
+};
+
+const firebaseConfig = getFirebaseConfig();
+let app, auth, db;
+
+try {
+  app = initializeApp(firebaseConfig);
+  auth = getAuth(app);
+  db = getFirestore(app);
+} catch (error) {
+  console.error('Firebase initialization failed:', error);
+}
+
+const appId = typeof __app_id !== 'undefined' ? __app_id : (import.meta.env.VITE_FIREBASE_APP_ID || 'default-app-id');
 
 // --- API Key Configuration ---
 const getApiKey = () => {
