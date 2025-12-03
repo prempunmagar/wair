@@ -8,3 +8,4 @@ export default defineConfig({
     open: true
   }
 })
+// Rebuild trigger
